@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Live Expression Calculator</title>
+<style>
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    background:#e5e7eb;
+    font-family:"Segoe UI",sans-serif;
+  }
+
+  .calculator{
+    background:#1e293b;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.3);
+    width:420px;
+  }
+
+  .display{
+    background:#0f172a;
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:20px;
+    color:#fff;
+    text-align:right;
+    min-height:80px;
+    word-wrap:break-word;
+  }
+  .expression{
+    font-size:1.2rem;
+    color:#94a3b8;
+    min-height:24px;
+  }
+  .current{
+    font-size:2.5rem;
+    font-weight:bold;
+    color:#f0fdf4;
+  }
+
+  .buttons{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+  }
+
+  button{
+    padding:20px;
+    font-size:1.4rem;
+    border:0;
+    border-radius:12px;
+    background:#334155;
+    color:#fff;
+    cursor:pointer;
+    transition:.2s;
+  }
+  button:active{ transform:scale(0.97) }
+
+  .operator{ background:#f59e0b; color:#111; font-weight:bold }
+  .equal{ background:#22c55e; color:#022c22; font-weight:bold; grid-column:span 2 }
+  .wide{ grid-column:span 2 }
+  .light{ background:#64748b }
+</style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div id="expression" class="expression"></div>
+      <div id="current" class="current">0</div>
+    </div>
+
+    <div class="buttons" id="buttons">
+      <button data-action="clear" class="light">AC</button>
+      <button data-action="delete" class="light">DEL</button>
+      <button data-action="operator" data-value="/">÷</button>
+      <button data-action="operator" data-value="*">×</button>
+
+      <button data-action="digit">7</button>
+      <button data-action="digit">8</button>
+      <button data-action="digit">9</button>
+      <button data-action="operator" data-value="-">−</button>
+
+      <button data-action="digit">4</button>
+      <button data-action="digit">5</button>
+      <button data-action="digit">6</button>
+      <button data-action="operator" data-value="+">+</button>
+
+      <button data-action="digit">1</button>
+      <button data-action="digit">2</button>
+      <button data-action="digit">3</button>
+      <button data-action="decimal">.</button>
+
+      <button data-action="digit" class="wide">0</button>
+      <button data-action="equals" class="equal">=</button>
+    </div>
+  </div>
+
+<script>
+const exprEl = document.getElementById('expression');
+const currentEl = document.getElementById('current');
+const buttonsEl = document.getElementById('buttons');
+
+let expression = '';  
+let current = '0';    
+
+function updateDisplay(){
+  exprEl.textContent = expression;
+  currentEl.textContent = current;
+}
+
+function inputDigit(d){
+  if (current === '0') current = d;
+  else current += d;
+  expression += d;  // add to full expression
+  updateDisplay();
+}
+
+function inputDecimal(){
+  if (!current.includes('.')){
+    current += '.';
+    expression += '.';
+    updateDisplay();
+  }
+}
+
+function clearAll(){
+  current = '0';
+  expression = '';
+  updateDisplay();
+}
+
+function deleteDigit(){
+  if (current.length > 1){
+    current = current.slice(0,-1);
+  } else {
+    current = '0';
+  }
+  expression = expression.slice(0,-1);
+  updateDisplay();
+}
+
+function handleOperator(op){
+  // prevent double operator
+  if (/[\+\-\*\/]$/.test(expression)) {
+    expression = expression.slice(0,-1) + op;
+  } else {
+    expression += ' ' + op + ' ';
+  }
+  current = '';  
+  updateDisplay();
+}
+
+function performCalculation(){
+  try {
+    let result = Function('"use strict";return (' + expression + ')')();
+    exprEl.textContent = expression + ' =';
+    current = String(result);
+    expression = ''; 
+    currentEl.textContent = current;
+  } catch {
+    current = 'Error';
+    expression = '';
+    updateDisplay();
+  }
+}
+
+buttonsEl.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  const action = btn.dataset.action;
+  const text = btn.textContent.trim();
+  if (action==='digit') inputDigit(text);
+  else if (action==='decimal') inputDecimal();
+  else if (action==='operator') handleOperator(btn.dataset.value);
+  else if (action==='equals') performCalculation();
+  else if (action==='clear') clearAll();
+  else if (action==='delete') deleteDigit();
+});
+
+updateDisplay();
+</script>
+</body>
+</html>
